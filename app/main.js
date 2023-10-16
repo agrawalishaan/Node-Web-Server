@@ -17,7 +17,16 @@ const server = net.createServer((socket) => {
   // listen for data from the client
   socket.on("data", (data) => {
     console.log("Received data from the client:", data.toString()); // convert buffer to string, by default interpret it as UTF-8 encoded
-    socket.write("HTTP/1.1 200 OK\r\n\r\n"); // send data back to the client
+    const requestData = data.toString();
+    const requestLines = requestData.split("\r\n");
+    const requestLine = requestLines[0];
+    const requestLineParts = requestLine.split(" ");
+    const [method, path, version] = requestLineParts;
+    if (path === "/") {
+      socket.write("HTTP/1.1 200 OK\r\n\r\n"); // send data back to the client, respond with status code
+    } else {
+      socket.write("HTTP/1.1 404 Not Found\r\n\r\n");
+    }
     socket.end();
   });
 });
