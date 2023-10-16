@@ -2,6 +2,8 @@ const net = require("net");
 
 const PORT = 4221;
 
+const ECHO_ROUTE = "/echo";
+
 // create a new TCP server.
 // When a client connects (determined from server.listen), node creates a socket object to represent a connection to that specific client. Node calls the provided callback with the socket.
 // Inside the callback, when a client connects, the inner callback is run
@@ -22,8 +24,20 @@ const server = net.createServer((socket) => {
     const requestLine = requestLines[0];
     const requestLineParts = requestLine.split(" ");
     const [method, path, version] = requestLineParts;
+    console.log(`method: ${method}`);
+    console.log(`path: ${path}`);
+    console.log(`version: ${version}`);
     if (path === "/") {
       socket.write("HTTP/1.1 200 OK\r\n\r\n"); // send data back to the client, respond with status code
+    } else if (path.startsWith(ECHO_ROUTE)) {
+      const message = path.slice(ECHO_ROUTE.length + 1); // grab the part after /echo/
+      console.log(`parsed message is ${message}`);
+      socket.write(
+        "HTTP/1.1 200 OK\r\n" +
+          "Content-Type: text/plain\r\n" +
+          `Content-Length: ${message.length}\r\n\r\n` +
+          `${message}` // send the header and body, delimited with \r\n\r\n
+      );
     } else {
       socket.write("HTTP/1.1 404 Not Found\r\n\r\n");
     }
