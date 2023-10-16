@@ -3,6 +3,7 @@ const fs = require("fs");
 
 const PORT = 4221;
 
+const ROUTE_ROOT = "/";
 const ROUTE_ECHO = "/echo";
 const ROUTE_USER_AGENT = "/user-agent";
 const ROUTE_FILES = "/files";
@@ -30,7 +31,7 @@ const server = net.createServer((socket) => {
     console.log(`method: ${method}`);
     console.log(`path: ${path}`);
     console.log(`version: ${version}`);
-    if (path === "/") {
+    if (path === ROUTE_ROOT) {
       socket.write("HTTP/1.1 200 OK\r\n\r\n"); // send data back to the client, respond with status code
     } else if (path.startsWith(ROUTE_ECHO)) {
       const message = path.slice(ROUTE_ECHO.length + 1); // grab the part after /echo/
