@@ -58,16 +58,23 @@ const server = net.createServer((socket) => {
       const absolutePath = `${absoluteDirPath}/${fileName}`;
       console.log(`absolute path is ${absolutePath}`);
       console.log(`file name from get request is ${fileName}`);
-      if (fs.existsSync(absolutePath)) {
-        const fileContents = fs.readFileSync(absolutePath, "utf-8");
-        socket.write(
-          "HTTP/1.1 200 OK\r\n" +
-            "Content-Type: application/octet-stream\r\n" +
-            `Content-Length: ${fileContents.length}\r\n\r\n` +
-            `${fileContents}`
-        );
-      } else {
-        socket.write("HTTP/1.1 404 Not Found\r\n\r\n");
+      if (method === "GET") {
+        if (fs.existsSync(absolutePath)) {
+          const fileContents = fs.readFileSync(absolutePath, "utf-8");
+          socket.write(
+            "HTTP/1.1 200 OK\r\n" +
+              "Content-Type: application/octet-stream\r\n" +
+              `Content-Length: ${fileContents.length}\r\n\r\n` +
+              `${fileContents}`
+          );
+        } else {
+          socket.write("HTTP/1.1 404 Not Found\r\n\r\n");
+        }
+      } else if (method === "POST") {
+        const fileContent = requestLines[requestLines.length - 1];
+        console.log(`file content from post request is ${fileContent}`);
+        fs.writeFileSync(absolutePath, fileContent);
+        socket.write("HTTP/1.1 201 OK\r\n\r\n");
       }
     } else {
       socket.write("HTTP/1.1 404 Not Found\r\n\r\n");
