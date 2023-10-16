@@ -1,9 +1,11 @@
 const net = require("net");
+const fs = require("fs");
 
 const PORT = 4221;
 
-const ECHO_ROUTE = "/echo";
-const USER_AGENT_ROUTE = "/user-agent";
+const ROUTE_ECHO = "/echo";
+const ROUTE_USER_AGENT = "/user-agent";
+const ROUTE_FILES = "/files";
 
 // create a new TCP server.
 // When a client connects (determined from server.listen), node creates a socket object to represent a connection to that specific client. Node calls the provided callback with the socket.
@@ -30,8 +32,8 @@ const server = net.createServer((socket) => {
     console.log(`version: ${version}`);
     if (path === "/") {
       socket.write("HTTP/1.1 200 OK\r\n\r\n"); // send data back to the client, respond with status code
-    } else if (path.startsWith(ECHO_ROUTE)) {
-      const message = path.slice(ECHO_ROUTE.length + 1); // grab the part after /echo/
+    } else if (path.startsWith(ROUTE_ECHO)) {
+      const message = path.slice(ROUTE_ECHO.length + 1); // grab the part after /echo/
       console.log(`parsed message is ${message}`);
       socket.write(
         "HTTP/1.1 200 OK\r\n" +
@@ -39,7 +41,7 @@ const server = net.createServer((socket) => {
           `Content-Length: ${message.length}\r\n\r\n` +
           `${message}` // send the header and body, delimited with \r\n\r\n
       );
-    } else if (path.startsWith(USER_AGENT_ROUTE)) {
+    } else if (path.startsWith(ROUTE_USER_AGENT)) {
       const hostLine = requestLines[1];
       const userAgentLine = requestLines[2];
       const userAgentParts = userAgentLine.split(" ");
@@ -50,6 +52,23 @@ const server = net.createServer((socket) => {
           `Content-Length: ${userAgent.length}\r\n\r\n` +
           `${userAgent}`
       );
+    } else if (path.startsWith(ROUTE_FILES)) {
+      const absoluteDirPath = process.argv[3];
+      const fileName = path.slice(ROUTE_FILES.length + 1);
+      const absolutePath = `${absoluteDirPath}/${fileName}`;
+      console.log(`absolute path is ${absolutePath}`);
+      console.log(`file name from get request is ${fileName}`);
+      if (fs.existsSync(absolutePath)) {
+        const fileContents = fs.readFileSync(absolutePath, "utf-8");
+        socket.write(
+          "HTTP/1.1 200 OK\r\n" +
+            "Content-Type: application/octet-stream\r\n" +
+            `Content-Length: ${fileContents.length}\r\n\r\n` +
+            `${fileContents}`
+        );
+      } else {
+        socket.write("HTTP/1.1 404 Not Found\r\n\r\n");
+      }
     } else {
       socket.write("HTTP/1.1 404 Not Found\r\n\r\n");
     }
